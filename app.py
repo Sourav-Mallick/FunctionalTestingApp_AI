@@ -5,100 +5,108 @@ from sklearn.metrics.pairwise import cosine_similarity
 import plotly.express as px
 
 # --- PAGE CONFIG ---
-st.set_page_config(page_title="QA Tool Strategy Advisor", layout="wide")
+st.set_page_config(page_title="Strategic QA Advisor", layout="wide", page_icon="🎯")
 
-# Custom CSS for a cleaner look
-st.markdown("""
-    <style>
-    .main { background-color: #f8f9fa; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    </style>
-    """, unsafe_allow_html=True)
-
-st.title("🏹 Enterprise QA Tool Recommendation Engine")
-st.write("Provide your project constraints below for a weighted mathematical analysis of the best-fit automation frameworks.")
-
-# --- THE DATASET (Expanded with 12 features per tool) ---
-# Order: Web, Mobile, Desktop, API, NoCode, Expert, BDD, AI_SelfHeal, NLP, VisualAI, CICD, Parallel
+# --- DATASET & DESCRIPTIONS ---
+# We now include 15 technical features for each tool
 tools_dict = {
-    "Selenium":      [1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1],
-    "Playwright":    [1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1],
-    "Cypress":       [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0],
-    "Appium":        [0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1],
-    "Katalon":       [1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1],
-    "testRigor":     [1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1],
-    "Tricentis Tosca": [1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1]
+    "Selenium":      [1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1],
+    "Playwright":    [1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1],
+    "Cypress":       [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    "Appium":        [0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+    "Katalon":       [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1],
+    "testRigor":     [1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1],
+    "Tricentis Tosca": [1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1]
 }
 
-# --- UI INPUTS ---
-with st.container():
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("🌐 Infrastructure & Apps")
-        q_platforms = st.multiselect("Target Platforms:", ["Web", "Mobile", "Desktop", "API"], help="Select all that apply to your project.")
-        q_budget = st.radio("Licensing Model:", ["Open Source", "Enterprise/Commercial"], horizontal=True)
-        
-    with col2:
-        st.subheader("👥 Team & Skillset")
-        q_skill = st.select_slider("Required Authoring Style:", options=["Scripting (Code)", "Hybrid", "No-Code (Plain English)"])
-        q_bdd = st.checkbox("BDD Support Required (Gherkin/Cucumber)")
+descriptions = {
+    "Selenium": "The open-source pioneer. Best for high-code, customized web automation.",
+    "Playwright": "Modern, fast, and extremely reliable. The new favorite for JS-heavy web apps.",
+    "Cypress": "Dev-friendly and great for front-end integration. Limited by single-tab execution.",
+    "Appium": "The gold standard for mobile automation. Requires high technical expertise.",
+    "Katalon": "Comprehensive all-in-one low-code platform. Great for teams moving from manual testing.",
+    "testRigor": "AI-First. Allows manual testers to write complex tests in plain English.",
+    "Tricentis Tosca": "The enterprise choice for complex end-to-end business process testing (SAP, Web, Mobile)."
+}
 
-    st.divider()
-    
-    with st.expander("🛠️ Advanced Feature Requirements"):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            q_ai = st.checkbox("AI Self-Healing")
-            q_nlp = st.checkbox("NLP / English Test Creation")
-        with c2:
-            q_visual = st.checkbox("Visual Regression AI")
-            q_parallel = st.checkbox("Parallel Execution")
-        with c3:
-            q_cicd = st.checkbox("Native CI/CD Integration")
+# --- UI DESIGN ---
+st.title("🎯 Strategic Functional Testing Tool Advisor")
+st.markdown("---")
 
-# --- ANALYTICS LOGIC ---
-if st.button("🚀 Execute Strategy Analysis", use_container_width=True):
-    # Convert UI to Vector
+# Categories using Tabs
+tab1, tab2, tab3, tab4 = st.tabs(["🌐 Infrastructure", "👥 Team & Skills", "🤖 Advanced AI", "⚙️ DevOps"])
+
+with tab1:
+    st.subheader("Application Tech Stack")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        q_web = st.checkbox("Web Application", value=True)
+        q_mob = st.checkbox("Mobile (Native/Hybrid)")
+        q_desk = st.checkbox("Desktop (Windows/Mac)")
+    with col_b:
+        q_api = st.checkbox("API / Microservices")
+        q_sap = st.checkbox("Enterprise ERP (SAP/Salesforce)")
+
+with tab2:
+    st.subheader("Personnel & Expertise")
+    q_skill = st.select_slider("Select Team Technical Level:", 
+                               options=["Manual Only", "Hybrid (Some Coding)", "Full SDET (Coders)"])
+    q_lang = st.selectbox("Primary Language Preference:", ["JavaScript", "Python", "Java", "C#", "No Preference"])
+    q_bdd = st.toggle("Require BDD (Gherkin/Cucumber) Support")
+
+with tab3:
+    st.subheader("Modern Automation Capabilities")
+    col_c, col_d = st.columns(2)
+    with col_c:
+        q_heal = st.checkbox("AI Self-Healing (Auto-update locators)", help="Reduces maintenance by 70%")
+        q_nlp = st.checkbox("Plain English Test Authoring")
+    with col_d:
+        q_visual = st.checkbox("Visual Regression AI", help="Pixel-perfect screenshot comparisons")
+        q_healing = st.checkbox("Auto-Test Data Generation")
+
+with tab4:
+    st.subheader("Operational Execution")
+    q_cicd = st.checkbox("Native CI/CD Pipeline Integration")
+    q_parallel = st.checkbox("Parallel Execution (Running 50+ tests simultaneously)")
+    q_cloud = st.checkbox("Managed Cloud Device Farm Support")
+
+# --- ANALYSIS ENGINE ---
+if st.button("🚀 GENERATE RECOMMENDATION REPORT", use_container_width=True):
+    # Mapping UI to 15-point Vector
     u_vec = [
-        1 if "Web" in q_platforms else 0,
-        1 if "Mobile" in q_platforms else 0,
-        1 if "Desktop" in q_platforms else 0,
-        1 if "API" in q_platforms else 0,
-        1 if q_skill == "No-Code (Plain English)" else 0,
-        1 if q_skill == "Scripting (Code)" else 0,
-        1 if q_bdd else 0,
-        1 if q_ai else 0,
-        1 if q_nlp else 0,
-        1 if q_visual else 0,
-        1 if q_cicd else 0,
-        1 if q_parallel else 0
+        1 if q_web else 0, 1 if q_mob else 0, 1 if q_desk else 0, 1 if q_api else 0,
+        1 if q_skill == "Manual Only" else 0, 1 if q_skill == "Full SDET (Coders)" else 0,
+        1 if q_bdd else 0, 1 if q_heal else 0, 1 if q_nlp else 0, 1 if q_visual else 0,
+        1 if q_cicd else 0, 1 if q_parallel else 0, 1 if q_sap else 0,
+        1 if q_skill != "Full SDET (Coders)" else 0, # Low-code preference
+        1 if q_cloud else 0
     ]
 
-    # Weighted Scoring Calculation
+    # Weighted Cosine Similarity
     results = []
     for tool, t_vec in tools_dict.items():
         score = cosine_similarity([u_vec], [t_vec])[0][0]
         results.append({"Tool": tool, "Match Score": round(score * 100, 1)})
     
     res_df = pd.DataFrame(results).sort_values(by="Match Score", ascending=False)
-
-    # --- RESULTS UI ---
+    
+    # Visualizing Results
     st.divider()
     top_tool = res_df.iloc[0]['Tool']
     
-    c_res1, c_res2 = st.columns([1, 2])
+    col_res1, col_res2 = st.columns([1, 1.5])
     
-    with c_res1:
-        st.metric(label="Primary Recommendation", value=top_tool)
-        st.write(f"The model found **{top_tool}** to be the highest mathematical match for your project constraints.")
+    with col_res1:
+        st.header("🏆 Recommended Path")
+        st.success(f"### {top_tool}")
+        st.write(descriptions[top_tool])
+        st.metric("Compatibility Score", f"{res_df.iloc[0]['Match Score']}%")
         
-    with c_res2:
-        fig = px.bar(res_df, x="Match Score", y="Tool", orientation='h', 
-                     color="Match Score", color_continuous_scale="GnBu",
-                     text_auto=True)
-        fig.update_layout(showlegend=False, height=400)
+    with col_res2:
+        fig = px.bar(res_df.head(5), x="Match Score", y="Tool", orientation='h', 
+                     color="Match Score", color_continuous_scale="RdYlGn",
+                     title="Top 5 Framework Match Percentage")
         st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader("🔍 Detailed Capability Comparison")
-    st.table(res_df)
+    st.subheader("📊 Comparative Benchmarking")
+    st.dataframe(res_df.style.highlight_max(axis=0), use_container_width=True)
