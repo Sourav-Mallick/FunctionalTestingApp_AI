@@ -4,109 +4,85 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import plotly.express as px
 
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="Strategic QA Advisor", layout="wide", page_icon="🎯")
+st.set_page_config(page_title="Weighted QA AI Advisor", layout="wide")
 
-# --- DATASET & DESCRIPTIONS ---
-# We now include 15 technical features for each tool
+# --- DATASET ---
+# Features: Web, Mob, Desk, API, NoCode, Expert, BDD, AI_Heal, NLP, VisualAI, CICD, Parallel, SAP, Cloud
 tools_dict = {
-    "Selenium":      [1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1],
-    "Playwright":    [1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1],
-    "Cypress":       [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-    "Appium":        [0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0],
-    "Katalon":       [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1],
-    "testRigor":     [1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1],
-    "Tricentis Tosca": [1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1]
+    "Selenium":      [1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0],
+    "Playwright":    [1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1],
+    "Cypress":       [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+    "Appium":        [0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1],
+    "Katalon":       [1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1],
+    "testRigor":     [1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1],
+    "Tricentis Tosca": [1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1]
 }
 
-descriptions = {
-    "Selenium": "The open-source pioneer. Best for high-code, customized web automation.",
-    "Playwright": "Modern, fast, and extremely reliable. The new favorite for JS-heavy web apps.",
-    "Cypress": "Dev-friendly and great for front-end integration. Limited by single-tab execution.",
-    "Appium": "The gold standard for mobile automation. Requires high technical expertise.",
-    "Katalon": "Comprehensive all-in-one low-code platform. Great for teams moving from manual testing.",
-    "testRigor": "AI-First. Allows manual testers to write complex tests in plain English.",
-    "Tricentis Tosca": "The enterprise choice for complex end-to-end business process testing (SAP, Web, Mobile)."
-}
+st.title("🏹 Weighted AI Tool Recommendation Engine")
+st.write("This model uses weighted vector similarity to match tools based on priority levels.")
 
-# --- UI DESIGN ---
-st.title("🎯 Strategic Functional Testing Tool Advisor")
-st.markdown("---")
+# --- STEP 1: DEFINE REQUIREMENTS ---
+st.header("1️⃣ Define Requirements")
+tabs = st.tabs(["Platforms", "Team", "Advanced"])
 
-# Categories using Tabs
-tab1, tab2, tab3, tab4 = st.tabs(["🌐 Infrastructure", "👥 Team & Skills", "🤖 Advanced AI", "⚙️ DevOps"])
+with tabs[0]:
+    c1, c2 = st.columns(2)
+    q_web = c1.checkbox("Web", value=True)
+    q_mob = c1.checkbox("Mobile")
+    q_desk = c2.checkbox("Desktop")
+    q_api = c2.checkbox("API")
 
-with tab1:
-    st.subheader("Application Tech Stack")
-    col_a, col_b = st.columns(2)
-    with col_a:
-        q_web = st.checkbox("Web Application", value=True)
-        q_mob = st.checkbox("Mobile (Native/Hybrid)")
-        q_desk = st.checkbox("Desktop (Windows/Mac)")
-    with col_b:
-        q_api = st.checkbox("API / Microservices")
-        q_sap = st.checkbox("Enterprise ERP (SAP/Salesforce)")
+with tabs[1]:
+    q_skill = st.select_slider("Skill Level:", ["No-Code", "Hybrid", "Scripting"])
+    q_bdd = st.toggle("BDD Required")
 
-with tab2:
-    st.subheader("Personnel & Expertise")
-    q_skill = st.select_slider("Select Team Technical Level:", 
-                               options=["Manual Only", "Hybrid (Some Coding)", "Full SDET (Coders)"])
-    q_lang = st.selectbox("Primary Language Preference:", ["JavaScript", "Python", "Java", "C#", "No Preference"])
-    q_bdd = st.toggle("Require BDD (Gherkin/Cucumber) Support")
+with tabs[2]:
+    q_ai = st.checkbox("AI Self-Healing")
+    q_nlp = st.checkbox("NLP Authoring")
+    q_cicd = st.checkbox("CI/CD Integration")
 
-with tab3:
-    st.subheader("Modern Automation Capabilities")
-    col_c, col_d = st.columns(2)
-    with col_c:
-        q_heal = st.checkbox("AI Self-Healing (Auto-update locators)", help="Reduces maintenance by 70%")
-        q_nlp = st.checkbox("Plain English Test Authoring")
-    with col_d:
-        q_visual = st.checkbox("Visual Regression AI", help="Pixel-perfect screenshot comparisons")
-        q_healing = st.checkbox("Auto-Test Data Generation")
+# --- STEP 2: DEFINE WEIGHTS (The "AI Tuning") ---
+st.header("2️⃣ Set Feature Priority")
+st.info("How much weight should the AI give to each category?")
+col_w1, col_w2, col_w3 = st.columns(3)
 
-with tab4:
-    st.subheader("Operational Execution")
-    q_cicd = st.checkbox("Native CI/CD Pipeline Integration")
-    q_parallel = st.checkbox("Parallel Execution (Running 50+ tests simultaneously)")
-    q_cloud = st.checkbox("Managed Cloud Device Farm Support")
+w_platform = col_w1.slider("Platform Importance", 1.0, 5.0, 3.0)
+w_skills = col_w2.slider("Team Skill Match", 1.0, 5.0, 2.0)
+w_modern = col_w3.slider("AI/Modern Features", 1.0, 5.0, 1.0)
 
-# --- ANALYSIS ENGINE ---
-if st.button("🚀 GENERATE RECOMMENDATION REPORT", use_container_width=True):
-    # Mapping UI to 15-point Vector
-    u_vec = [
+# --- ANALYSIS ---
+if st.button("🚀 RUN WEIGHTED ANALYSIS"):
+    # Create User Vector
+    u_vec = np.array([
         1 if q_web else 0, 1 if q_mob else 0, 1 if q_desk else 0, 1 if q_api else 0,
-        1 if q_skill == "Manual Only" else 0, 1 if q_skill == "Full SDET (Coders)" else 0,
-        1 if q_bdd else 0, 1 if q_heal else 0, 1 if q_nlp else 0, 1 if q_visual else 0,
-        1 if q_cicd else 0, 1 if q_parallel else 0, 1 if q_sap else 0,
-        1 if q_skill != "Full SDET (Coders)" else 0, # Low-code preference
-        1 if q_cloud else 0
-    ]
+        1 if q_skill == "No-Code" else 0, 1 if q_skill == "Scripting" else 0,
+        1 if q_bdd else 0, 1 if q_ai else 0, 1 if q_nlp else 0, 0, # VisualPlaceholder
+        1 if q_cicd else 0, 0, 0, 0 # Padding for remaining features
+    ])
 
-    # Weighted Cosine Similarity
+    # Create Weight Vector
+    # We apply weights to specific indices of the vector
+    weights = np.array([
+        w_platform, w_platform, w_platform, w_platform, # Platforms
+        w_skills, w_skills, w_skills, # Skills
+        w_modern, w_modern, w_modern, w_modern, w_modern, w_modern, w_modern # Modern/DevOps
+    ])
+
+    # Calculate Weighted Scores
     results = []
     for tool, t_vec in tools_dict.items():
-        score = cosine_similarity([u_vec], [t_vec])[0][0]
-        results.append({"Tool": tool, "Match Score": round(score * 100, 1)})
-    
-    res_df = pd.DataFrame(results).sort_values(by="Match Score", ascending=False)
-    
-    # Visualizing Results
-    st.divider()
-    top_tool = res_df.iloc[0]['Tool']
-    
-    col_res1, col_res2 = st.columns([1, 1.5])
-    
-    with col_res1:
-        st.header("🏆 Recommended Path")
-        st.success(f"### {top_tool}")
-        st.write(descriptions[top_tool])
-        st.metric("Compatibility Score", f"{res_df.iloc[0]['Match Score']}%")
+        # Weighted math: Multiply vectors by weights before similarity
+        w_u_vec = u_vec * weights
+        w_t_vec = np.array(t_vec) * weights
         
-    with col_res2:
-        fig = px.bar(res_df.head(5), x="Match Score", y="Tool", orientation='h', 
-                     color="Match Score", color_continuous_scale="RdYlGn",
-                     title="Top 5 Framework Match Percentage")
-        st.plotly_chart(fig, use_container_width=True)
+        score = cosine_similarity([w_u_vec], [w_t_vec])[0][0]
+        results.append({"Tool": tool, "Match Score": round(score * 100, 1)})
 
-    st.subheader("📊 Comparative Benchmarking")
-    st.dataframe(res_df.style.highlight_max(axis=0), use_container_width=True)
+    res_df = pd.DataFrame(results).sort_values("Match Score", ascending=False)
+    
+    # UI Results
+    st.divider()
+    st.success(f"### Top Recommendation: {res_df.iloc[0]['Tool']}")
+    
+    fig = px.bar(res_df, x="Match Score", y="Tool", orientation='h', color="Match Score")
+    st.plotly_chart(fig, use_container_width=True)
